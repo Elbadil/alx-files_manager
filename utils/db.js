@@ -18,6 +18,7 @@ class DBClient {
       .connect()
       .then(() => {
         this.isConnected = true;
+        this.database = db;
       })
       .catch((err) => {
         console.error('Error connecting to MongoDB:', err);
