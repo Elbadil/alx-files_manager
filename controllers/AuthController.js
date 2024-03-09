@@ -4,6 +4,7 @@ import redisClient from '../utils/redis';
 
 const sha1 = require('sha1');
 const uuidv4 = require('uuid').v4;
+const { ObjectID } = require('mongodb');
 
 class AuthController {
   static async getConnect(req, res) {
@@ -31,8 +32,12 @@ class AuthController {
 
   static async getDisconnect(req, res) {
     const token = req.headers['x-token'];
-    const userToken = await redisClient.get(`auth_${token}`);
-    if (!userToken) {
+    const userId = await redisClient.get(`auth_${token}`);
+    const collection = dbClient.client
+      .db(dbClient.database)
+      .collection('users');
+    const user = await collection.findOne({ _id: new ObjectID(userId) });
+    if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     await redisClient.del(`auth_${token}`);
