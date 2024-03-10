@@ -9,6 +9,9 @@ const { ObjectID } = require('mongodb');
 class AuthController {
   static async getConnect(req, res) {
     const { authorization } = req.headers;
+    if (!authorization) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const authCode = authorization.slice(6);
     let authCodeDecode;
     try {
