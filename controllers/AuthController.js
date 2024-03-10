@@ -1,4 +1,3 @@
-/* global atob */
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -12,10 +11,10 @@ class AuthController {
     if (!authorization) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const authCode = authorization.slice(6);
+    const authCode = authorization.split(' ')[1];
     let authCodeDecode;
     try {
-      authCodeDecode = atob(authCode).split(':', 2);
+      authCodeDecode = Buffer.from(authCode, 'base64').toString().split(':', 2);
     } catch (err) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -52,7 +51,7 @@ class AuthController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     await redisClient.del(`auth_${token}`);
-    return res.status(204).send('');
+    return res.status(204).end();
   }
 }
 
