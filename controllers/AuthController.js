@@ -10,7 +10,12 @@ class AuthController {
   static async getConnect(req, res) {
     const { authorization } = req.headers;
     const authCode = authorization.slice(6);
-    const authCodeDecode = atob(authCode).split(':', 2);
+    let authCodeDecode;
+    try {
+      authCodeDecode = atob(authCode).split(':', 2);
+    } catch (err) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const email = authCodeDecode[0];
     const password = authCodeDecode[1];
     const hashPwd = sha1(password);
