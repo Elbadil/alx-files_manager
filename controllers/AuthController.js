@@ -12,10 +12,8 @@ class AuthController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const authCode = authorization.split(' ')[1];
-    let authCodeDecode;
-    try {
-      authCodeDecode = Buffer.from(authCode, 'base64').toString().split(':', 2);
-    } catch (err) {
+    const authCodeDecode = Buffer.from(authCode, 'base64').toString().split(':');
+    if (authCodeDecode.length !== 2) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const email = authCodeDecode[0];
@@ -51,7 +49,7 @@ class AuthController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     await redisClient.del(`auth_${token}`);
-    return res.status(204).send();
+    return res.status(204).send('');
   }
 }
 
