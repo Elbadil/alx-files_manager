@@ -101,6 +101,81 @@ class FilesController {
       parentId,
     });
   }
+
+  static async getShow(req, res) {
+    const token = req.headers['x-token'];
+    const users = dbClient.client.db(dbClient.database).collection('users');
+    const files = dbClient.client.db(dbClient.database).collection('files');
+
+    // Checking user availability
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await users.findOne({ _id: new ObjectID(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // searching for a file based on users Id and file id req parameter
+    const { id } = req.params;
+    const file = await files.findOne({ userId: new ObjectID(userId), _id: new ObjectID(id) });
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    return res.status(200).json({
+      id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    const users = dbClient.client.db(dbClient.database).collection('users');
+    const filesColl = dbClient.client.db(dbClient.database).collection('files');
+
+    // Checking user availability
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await users.findOne({ _id: new ObjectID(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // Query the parentId and page from request url
+    let { parentId, page } = req.query;
+    parentId = parentId || 0;
+    page = page || 0;
+
+    // Defining a pipeline for our pagination functionality
+    const pipeline = [
+      { $match: { parentId } },
+      { $skip: page * 20 },
+      { $limit: 20 },
+    ];
+
+    const filesRespList = [];
+    const files = await filesColl.aggregate(pipeline).toArray();
+    if (files.length === 0) {
+      return res.status(200).json([]);
+    }
+    files.forEach((file) => {
+      filesRespList.push({
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      });
+    });
+    return res.status(200).json(filesRespList);
+  }
 }
 
 module.exports = FilesController;
