@@ -17,7 +17,7 @@ class FilesController {
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const user = await users.findOne({ email: 'bob@dylan.com' });
+    const user = await users.findOne({ _id: new ObjectID(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
