@@ -45,13 +45,17 @@ class FilesController {
         return res.status(400).json({ error: 'Parent is not a folder' });
       }
     }
-    // we set default values to parentId and isPublic if no values passed
-    parentId = parentId || 0;
+    // we set default value to isPublic to false if no value passed
+    if (parentId) {
+      parentId = ObjectID(parentId);
+    } else {
+      parentId = 0;
+    }
     isPublic = isPublic || false;
     // inserting the folder in the files collection if type is folder
     if (type === 'folder') {
       const insertFile = await files.insertOne({
-        userId,
+        userId: ObjectID(userId),
         name,
         type,
         isPublic,
@@ -85,11 +89,11 @@ class FilesController {
       }
     });
     const insertFile = await files.insertOne({
-      userId,
+      userId: ObjectID(userId),
       name,
       type,
       isPublic,
-      parentId,
+      parentId: ObjectID(parentId) ? parentId : 0,
       localPath: filePath,
     });
     return res.status(201).json({
@@ -112,14 +116,17 @@ class FilesController {
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const user = await users.findOne({ _id: new ObjectID(userId) });
+    const user = await users.findOne({ _id: ObjectID(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // searching for a file based on users Id and file id req parameter
     const { id } = req.params;
-    const file = await files.findOne({ userId, _id: new ObjectID(id) });
+    const file = await files.findOne({
+      userId: ObjectID(userId),
+      _id: ObjectID(id),
+    });
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
@@ -143,24 +150,29 @@ class FilesController {
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const user = await users.findOne({ _id: new ObjectID(userId) });
+    const user = await users.findOne({ _id: ObjectID(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     // Query the parentId and page from request url
-    let { parentId, page } = req.query;
-    parentId = parentId || 0;
+    const { parentId } = req.query;
+    let { page } = req.query;
     page = page || 0;
 
     // Defining a pipeline for our pagination functionality
-    const pipeline = [
-      { $match: { parentId } },
-      { $skip: page * 20 },
-      { $limit: 20 },
-    ];
-
+    let pipeline;
+    let files;
+    if (parentId) {
+      pipeline = [
+        { $match: { parentId: ObjectID(parentId) } },
+        { $skip: page * 20 },
+        { $limit: 20 },
+      ];
+      files = await filesColl.aggregate(pipeline).toArray();
+    } else {
+      files = await filesColl.find().toArray();
+    }
     const filesRespList = [];
-    const files = await filesColl.aggregate(pipeline).toArray();
     if (files.length === 0) {
       return res.status(200).json([]);
     }
