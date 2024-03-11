@@ -119,7 +119,7 @@ class FilesController {
 
     // searching for a file based on users Id and file id req parameter
     const { id } = req.params;
-    const file = await files.findOne({ userId: new ObjectID(userId), _id: new ObjectID(id) });
+    const file = await files.findOne({ userId, _id: new ObjectID(id) });
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
