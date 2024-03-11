@@ -170,7 +170,11 @@ class FilesController {
       ];
       files = await filesColl.aggregate(pipeline).toArray();
     } else {
-      files = await filesColl.find().toArray();
+      pipeline = [
+        { $skip: page * 20 },
+        { $limit: 20 },
+      ];
+      files = await filesColl.aggregate(pipeline).toArray();
     }
     const filesRespList = [];
     if (files.length === 0) {
