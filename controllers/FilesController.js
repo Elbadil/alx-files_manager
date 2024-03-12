@@ -220,7 +220,7 @@ class FilesController {
     );
     return res.status(200).json({
       id: file._id,
-      userId,
+      userId: file.userId,
       name: file.name,
       type: file.type,
       isPublic: file.isPublic,
@@ -258,7 +258,7 @@ class FilesController {
     );
     return res.status(200).json({
       id: file._id,
-      userId,
+      userId: file.userId,
       name: file.name,
       type: file.type,
       isPublic: file.isPublic,
