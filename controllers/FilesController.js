@@ -213,8 +213,8 @@ class FilesController {
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
-    // eslint-disable-next-line no-unused-vars
-    const updateFile = await filesColl.updateOne(
+
+    await filesColl.updateOne(
       file, { $set: { isPublic: true } },
     );
     return res.status(200).json({
@@ -250,8 +250,8 @@ class FilesController {
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
-    // eslint-disable-next-line no-unused-vars
-    const updateFile = await filesColl.updateOne(
+
+    await filesColl.updateOne(
       file, { $set: { isPublic: false } },
     );
     return res.status(200).json({
