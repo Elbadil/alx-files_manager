@@ -170,10 +170,7 @@ class FilesController {
       ];
       files = await filesColl.aggregate(pipeline).toArray();
     } else {
-      pipeline = [
-        { $skip: page * 20 },
-        { $limit: 20 },
-      ];
+      pipeline = [{ $skip: page * 20 }, { $limit: 20 }];
       files = await filesColl.aggregate(pipeline).toArray();
     }
     const filesRespList = [];
@@ -191,6 +188,80 @@ class FilesController {
       });
     });
     return res.status(200).json(filesRespList);
+  }
+
+  static async putPublish(req, res) {
+    const token = req.headers['x-token'];
+    const users = dbClient.client.db(dbClient.database).collection('users');
+    const filesColl = dbClient.client.db(dbClient.database).collection('files');
+
+    // Checking user availability
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await users.findOne({ _id: ObjectID(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // searching for a file based on users Id and file id req parameter
+    const { id } = req.params;
+    const file = await filesColl.findOne({
+      userId: ObjectID(userId),
+      _id: ObjectID(id),
+    });
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    // eslint-disable-next-line no-unused-vars
+    const updateFile = await filesColl.updateOne(
+      file, { $set: { isPublic: true } },
+    );
+    return res.status(200).json({
+      id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
+  }
+
+  static async putUnpublish(req, res) {
+    const token = req.headers['x-token'];
+    const users = dbClient.client.db(dbClient.database).collection('users');
+    const filesColl = dbClient.client.db(dbClient.database).collection('files');
+
+    // Checking user availability
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await users.findOne({ _id: ObjectID(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // searching for a file based on users Id and file id req parameter
+    const { id } = req.params;
+    const file = await filesColl.findOne({
+      userId: ObjectID(userId),
+      _id: ObjectID(id),
+    });
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    // eslint-disable-next-line no-unused-vars
+    const updateFile = await filesColl.updateOne(
+      file, { $set: { isPublic: false } },
+    );
+    return res.status(200).json({
+      id: file._id,
+      userId,
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId,
+    });
   }
 }
 
