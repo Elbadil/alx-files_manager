@@ -206,7 +206,7 @@ class FilesController {
     }
     // searching for a file based on users Id and file id req parameter
     const { id } = req.params;
-    const file = await filesColl.findOne({
+    let file = await filesColl.findOne({
       userId: ObjectID(userId),
       _id: ObjectID(id),
     });
@@ -218,6 +218,10 @@ class FilesController {
       { _id: ObjectID(id) },
       { $set: { isPublic: true } },
     );
+    file = await filesColl.findOne({
+      userId: ObjectID(userId),
+      _id: ObjectID(id),
+    });
     return res.status(200).json({
       id: file._id,
       userId: file.userId,
@@ -244,7 +248,7 @@ class FilesController {
     }
     // searching for a file based on users Id and file id req parameter
     const { id } = req.params;
-    const file = await filesColl.findOne({
+    let file = await filesColl.findOne({
       userId: ObjectID(userId),
       _id: ObjectID(id),
     });
@@ -256,6 +260,10 @@ class FilesController {
       { _id: ObjectID(id) },
       { $set: { isPublic: false } },
     );
+    file = await filesColl.findOne({
+      userId: ObjectID(userId),
+      _id: ObjectID(id),
+    });
     return res.status(200).json({
       id: file._id,
       userId: file.userId,
