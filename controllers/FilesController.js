@@ -1,8 +1,10 @@
 import { env } from 'process';
+import { promisify } from 'util';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
 const uuidv4 = require('uuid').v4;
+const mime = require('mime-types');
 const fs = require('fs');
 const { ObjectID } = require('mongodb');
 
@@ -272,6 +274,48 @@ class FilesController {
       isPublic: file.isPublic,
       parentId: file.parentId,
     });
+  }
+
+  static async getFile(req, res) {
+    const token = req.headers['x-token'];
+    const { id } = req.params;
+
+    const users = dbClient.client.db(dbClient.database).collection('users');
+    const filesColl = dbClient.client.db(dbClient.database).collection('files');
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await users.findOne({ _id: ObjectID(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const file = await filesColl.findOne({ _id: ObjectID(id), userId: ObjectID(userId) });
+    if (!file || !file.isPublic) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    // check if localPath of the file exists
+    const asyncAccess = promisify(fs.access);
+    try {
+      await asyncAccess(file.localPath, fs.constants.F_OK);
+    } catch (err) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    // Reading the content from the file if exists
+    const asyncReadFile = promisify(fs.readFile);
+    const fileContent = await asyncReadFile(file.localPath, 'utf-8');
+
+    // Defining Content Type using the mime module
+    const fileType = mime.lookup(file.name);
+
+    res.status(200).setHeader('Content-Type', fileType);
+    return res.send(fileContent);
   }
 }
 
