@@ -215,7 +215,8 @@ class FilesController {
     }
 
     await filesColl.updateOne(
-      file, { $set: { isPublic: true } },
+      { _id: ObjectID(id) },
+      { $set: { isPublic: true } },
     );
     return res.status(200).json({
       id: file._id,
@@ -252,7 +253,8 @@ class FilesController {
     }
 
     await filesColl.updateOne(
-      file, { $set: { isPublic: false } },
+      { _id: ObjectID(id) },
+      { $set: { isPublic: false } },
     );
     return res.status(200).json({
       id: file._id,
