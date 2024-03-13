@@ -291,7 +291,7 @@ class FilesController {
 
     // If file is not public and no user authenticated or the userId is
     // not the same As the files
-    if (!file.isPublic && (!userId || file.userId !== ObjectID(userId))) {
+    if (!file.isPublic && (!userId || file.userId.toString() !== userId)) {
       return res.status(404).json({ error: 'Not found' });
     }
 
